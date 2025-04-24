@@ -2,16 +2,16 @@ const GRID_SIZE = 30;
 const board = document.getElementById('gameBoard');
 let snake, direction, nextDirection, food, score, speed, gameInterval, isRunning;
 
-// ------------------------------
-// Utility Functions
-// ------------------------------
-
 // 隨機生成食物位置
 function randomFood() {
-  return {
-    x: Math.floor(Math.random() * GRID_SIZE),
-    y: Math.floor(Math.random() * GRID_SIZE),
-  };
+  let newFood;
+  do {
+    newFood = {
+      x: Math.floor(Math.random() * GRID_SIZE),
+      y: Math.floor(Math.random() * GRID_SIZE),
+    };
+  } while (snake.some(seg => seg.x === newFood.x && seg.y === newFood.y));
+  return newFood;
 }
 
 // 處理邊緣傳送
@@ -34,10 +34,6 @@ function moveSnake() {
   const head = snake[0];
   return wrapPosition({ x: head.x + direction.x, y: head.y + direction.y });
 }
-
-// ------------------------------
-// Game Mechanics
-// ------------------------------
 
 // 初始化棋盤
 function initBoard() {
@@ -67,11 +63,26 @@ function handleFood(head) {
   return false;
 }
 
-// ------------------------------
-// Update & Draw
-// ------------------------------
+// 清空畫面上的蛇與食物
+function clearBoard() {
+  document.querySelectorAll('.cell').forEach(c => c.classList.remove('snake', 'food'));
+}
 
-// update
+// 繪製食物
+function drawFood() {
+  const cell = document.querySelector(`.cell[data-x="${food.x}"][data-y="${food.y}"]`);
+  if (cell) cell.classList.add('food');
+}
+
+// 繪製蛇身
+function drawSnake() {
+  for (const segment of snake) {
+    const cell = document.querySelector(`.cell[data-x="${segment.x}"][data-y="${segment.y}"]`);
+    if (cell) cell.classList.add('snake');
+  }
+}
+
+// 更新遊戲狀態
 function update() {
   const newHead = moveSnake();
   if (isCollision(newHead)) {
@@ -84,44 +95,12 @@ function update() {
   if (!handleFood(newHead)) snake.pop();
 }
 
-// 依座標取得格子
-function getCell(x, y) {
-  return document.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
-}
-
-// 清空畫面上的蛇與食物
-function clearBoard() {
-  document.querySelectorAll('.cell').forEach(c => c.classList.remove('snake', 'food'));
-}
-
-// 繪製食物
-function drawFood() {
-  const cell = getCell(food.x, food.y);
-  if (cell) {
-    cell.classList.add('food');
-  }
-}
-
-// 繪製蛇身
-function drawSnake() {
-  for (const segment of snake) {
-    const cell = getCell(segment.x, segment.y);
-    if (cell) {
-      cell.classList.add('snake');
-    }
-  }
-}
-
-// draw
+// 繪製畫面
 function draw() {
   clearBoard();
   drawFood();
   drawSnake();
 }
-
-// ------------------------------
-// Control Loop
-// ------------------------------
 
 // 遊戲主迴圈
 function gameLoop() {
@@ -145,7 +124,7 @@ function startGame() {
   gameInterval = setInterval(gameLoop, speed);
 }
 
-// 暫停 / 繼續
+// 暫停 / 繼續遊戲
 function togglePause() {
   if (!isRunning) return;
   if (gameInterval) {
@@ -170,12 +149,10 @@ function handleKey(e) {
   }
 }
 
-// ------------------------------
-// UI Binding & Init
-// ------------------------------
-
+// 綁定事件
 document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('pauseBtn').addEventListener('click', togglePause);
 window.addEventListener('keydown', handleKey);
 
+// 初始化
 initBoard();
